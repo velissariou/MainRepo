@@ -1,150 +1,180 @@
-#include <stdlib.h>
 #include <stdio.h>
-
-#define NumberOfNodes 5
-#define NilValue -1
+#include <stdlib.h>
 
 typedef int ListElementType;
-
-typedef int ListPointer;
-
-typedef struct {
-    ListElementType Data;
-    ListPointer  Next;
-} NodeType;
+typedef struct ListNode *ListPointer;
+typedef struct ListNode
+{
+	ListElementType Data;
+    ListPointer Next;
+} ListNode;
 
 typedef enum {
     FALSE, TRUE
 } boolean;
 
-void InitializeStoragePool(NodeType Node[], ListPointer *FreePtr);
-void CreateLList(ListPointer *List);
-boolean EmptyLList(ListPointer List);
-boolean FullLList(ListPointer FreePtr);
-void GetNode(ListPointer *P, ListPointer *FreePtr, NodeType Node[]);
-void ReleaseNode(NodeType Node[NumberOfNodes], ListPointer P, ListPointer *FreePtr);
-void Insert(ListPointer *List, NodeType Node[],ListPointer *FreePtr, ListPointer PredPtr, ListElementType Item);
-void Delete(ListPointer *List, NodeType Node[], ListPointer *FreePtr, ListPointer PredPtr);
-void TraverseLinked(ListPointer List, NodeType Node[]);
 
+void CreateList(ListPointer *List);
+boolean EmptyList(ListPointer List);
+void LinkedInsert(ListPointer *List, ListElementType Item, ListPointer PredPtr);
+void LinkedDelete(ListPointer *List, ListPointer PredPtr);
+void LinkedTraverse(ListPointer List);
+void LinearSearch(ListPointer List, ListElementType Item, ListPointer *PredPtr, boolean *Found);
+void OrderedLimearSearch(ListPointer List, ListElementType Item, ListPointer *PredPtr, boolean *Found);
+void append_list_element(ListPointer *List, ListElementType Item);
 
 int main(){
+  ListPointer AList, PredPtr;
+  ListElementType Item;
+  int i,n;
+
+  CreateList(&AList);
+  printf("Give number of elements: ");
+  scanf("%d", &n);
+  for(i=0; i<n ;i++){
+    printf("Give element to insert in beginning of list: ");
+    scanf("%d", &Item);
+    LinkedInsert(&AList,Item,NULL);
+  }
+  LinkedTraverse(AList);
+  printf("Give element to insert in the end of list: ");
+  scanf("%d", &Item);
+  append_list_element(&AList, Item);
+  LinkedTraverse(AList);
 
 }
 
-
-#include <stdio.h>
-#include "L_ListADT.h"
-
-void InitializeStoragePool(NodeType Node[], ListPointer *FreePtr)
-
-{
-   int i;
-
-    for (i=0; i<NumberOfNodes-1;i++)
-    {
-        Node[i].Next=i+1;
-        Node[i].Data=-1;
-    }
-    Node[NumberOfNodes-1].Next=NilValue;
-    Node[NumberOfNodes-1].Data=NilValue;
-    *FreePtr=0;
-}
-
-void CreateLList(ListPointer *List)
-
-{
-  *List=NilValue;
-}
-
-boolean EmptyLList(ListPointer List)
-
-{
-  return (List==NilValue);
-}
-
-boolean FullLList(ListPointer FreePtr)
-
-{
-  return (FreePtr == NilValue);
-}
-
-void GetNode(ListPointer *P, ListPointer *FreePtr, NodeType Node[])
-
-{
-  *P = *FreePtr;
-  if (!FullLList(*FreePtr))
-    *FreePtr =Node[*FreePtr].Next;
-}
-
-void ReleaseNode(NodeType Node[], ListPointer P, ListPointer *FreePtr)
-
-{
-  Node[P].Next =*FreePtr;
-  Node[P].Data = -1;
-
-  *FreePtr =P;
-}
-
-void Insert(ListPointer *List, NodeType Node[],ListPointer *FreePtr, ListPointer PredPtr, ListElementType Item)
-
-{
-  ListPointer TempPtr;
-  GetNode(&TempPtr,FreePtr,Node);
-  if (!FullLList(TempPtr)) {
-    if (PredPtr==NilValue)
-    {
-        Node[TempPtr].Data =Item;
-        Node[TempPtr].Next =*List;
-        *List =TempPtr;
-    }
-    else
-      {
-        Node[TempPtr].Data =Item;
-        Node[TempPtr].Next =Node[PredPtr].Next;
-        Node[PredPtr].Next =TempPtr;
-      }
-}
-  else
-    printf("Full List ...\n");
-}
-
-void Delete(ListPointer *List, NodeType Node[], ListPointer *FreePtr, ListPointer PredPtr)
-
-{
-  ListPointer TempPtr ;
-
-  if (!EmptyLList(*List))
-    if (PredPtr == NilValue)
-    {
-        TempPtr =*List;
-        *List =Node[TempPtr].Next;
-        ReleaseNode(Node,TempPtr,FreePtr);
-    }
-    else
-      {
-        TempPtr =Node[PredPtr].Next;
-        Node[PredPtr].Next =Node[TempPtr].Next;
-        ReleaseNode(Node,TempPtr,FreePtr);
-      }
-  else
-    printf("Empty List ...\n");
-}
-
-void TraverseLinked(ListPointer List, NodeType Node[])
-
-{
+void append_list_element(ListPointer *List, ListElementType Item){
   ListPointer CurrPtr;
+  CurrPtr = NULL;
+  if(!EmptyList(*List)) {
+    CurrPtr = *List;
+    while (CurrPtr->Next != NULL) {
+      CurrPtr = CurrPtr->Next;
+    }
+    LinkedInsert(&(*List),Item,CurrPtr);
+  }
+}
 
-  if (!EmptyLList(List))
-  {
-      CurrPtr =List;
-      while (CurrPtr != NilValue)
-      {
-          printf("(%d: %d,%d) ",CurrPtr,Node[CurrPtr].Data, Node[CurrPtr].Next);
-          CurrPtr=Node[CurrPtr].Next;
-       }
-       printf("\n");
+
+void CreateList(ListPointer *List)
+
+{
+	*List = NULL;
+}
+
+boolean EmptyList(ListPointer List)
+
+{
+	return (List==NULL);
+}
+
+void LinkedInsert(ListPointer *List, ListElementType Item, ListPointer PredPtr)
+
+{
+	ListPointer TempPtr;
+
+   TempPtr= (ListPointer)malloc(sizeof(struct ListNode));
+ /*  printf("Insert &List %p, List %p,  &(*List) %p, (*List) %p, TempPtr %p\n",
+   &List, List,  &(*List), (*List), TempPtr); */
+   TempPtr->Data = Item;
+	if (PredPtr==NULL) {
+        TempPtr->Next = *List;
+        *List = TempPtr;
+    }
+    else {
+        TempPtr->Next = PredPtr->Next;
+        PredPtr->Next = TempPtr;
+    }
+}
+
+void LinkedDelete(ListPointer *List, ListPointer PredPtr)
+
+{
+    ListPointer TempPtr;
+
+    if (EmptyList(*List))
+   	    printf("EMPTY LIST\n");
+   else
+   {
+   	    if (PredPtr == NULL)
+        {
+      	      TempPtr = *List;
+              *List = TempPtr->Next;
+        }
+        else
+        {
+      	     TempPtr = PredPtr->Next;
+             PredPtr->Next = TempPtr->Next;
+        }
+        free(TempPtr);
+    }
+}
+
+void LinkedTraverse(ListPointer List)
+
+{
+	ListPointer CurrPtr;
+
+   if (EmptyList(List))
+   	    printf("EMPTY LIST\n");
+   else
+   {
+   	    CurrPtr = List;
+   	 //   printf("%p\n",CurrPtr);
+   	 //   printf("%s\t\t%s\t%7s\n", "CurrPtr","Data","Next");
+         while ( CurrPtr!=NULL )
+        {
+             printf("%d ",(*CurrPtr).Data);
+             CurrPtr = CurrPtr->Next;
+        }
+        printf("\n");
    }
-  else printf("Empty List ...\n");
+}
+
+void LinearSearch(ListPointer List, ListElementType Item, ListPointer *PredPtr, boolean *Found)
+
+{
+   ListPointer CurrPtr;
+   boolean stop;
+
+   CurrPtr = List;
+    *PredPtr=NULL;
+   stop= FALSE;
+   while (!stop && CurrPtr!=NULL )
+    {
+         if (CurrPtr->Data==Item )
+         	stop = TRUE;
+         else
+         {
+         	*PredPtr = CurrPtr;
+            CurrPtr = CurrPtr->Next;
+         }
+	}
+	*Found=stop;
+}
+
+void OrderedLimearSearch(ListPointer List, ListElementType Item, ListPointer *PredPtr, boolean *Found)
+
+{
+   ListPointer CurrPtr;
+   boolean DoneSearching;
+
+   CurrPtr = List;
+   *PredPtr = NULL;
+   DoneSearching = FALSE;
+   *Found = FALSE;
+   while (!DoneSearching && CurrPtr!=NULL )
+    {
+         if (CurrPtr->Data>=Item )
+         {
+         	DoneSearching = TRUE;
+         	*Found = (CurrPtr->Data==Item);
+         }
+         else
+         {
+         	*PredPtr = CurrPtr;
+            CurrPtr = CurrPtr->Next;
+         }
+	}
 }
